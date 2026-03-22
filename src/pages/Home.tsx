@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowRight, Star, Phone, ShieldCheck, Sparkles, Mail } from 'lucide-react';
+import { ArrowRight, Star, Phone, ShieldCheck, Sparkles } from 'lucide-react';
 
 const Home = () => {
-  const adminEmail = "Cleanandcarehub26@gmail.com";
-  const emailLink = `mailto:${adminEmail}`;
+  const whatsappNumber = "+2348146856984";
+  const whatsappLink = `https://wa.me/${whatsappNumber.replace(/\s+/g, '')}`;
 
   return (
     <div className="flex flex-col">
@@ -39,11 +39,13 @@ const Home = () => {
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <a 
-                  href={emailLink}
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="bg-white text-slate-900 border border-slate-200 px-8 py-4 rounded-full font-bold text-lg hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
                 >
-                  <Mail className="w-5 h-5" />
-                  Email Booking
+                  <Phone className="w-5 h-5" />
+                  WhatsApp Booking
                 </a>
               </div>
               
@@ -116,7 +118,7 @@ const Home = () => {
           <div className="grid md:grid-cols-3 gap-12">
             {[
               { step: "01", title: "Choose Service", desc: "Select from our range of domestic services including cleaning, childcare, and more." },
-              { step: "02", title: "Book Instantly", desc: "Fill out our quick booking form or reach out via Email for immediate scheduling." },
+              { step: "02", title: "Book Instantly", desc: "Reach out via WhatsApp for immediate scheduling and professional coordination." },
               { step: "03", title: "Relax & Enjoy", desc: "Our vetted professionals handle the work while you focus on what matters most." }
             ].map((item, i) => (
               <div key={i} className="relative group">
