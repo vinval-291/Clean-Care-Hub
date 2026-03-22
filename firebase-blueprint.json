@@ -1,0 +1,57 @@
+{
+  "entities": {
+    "Booking": {
+      "title": "Booking",
+      "description": "A service booking request from a customer.",
+      "type": "object",
+      "properties": {
+        "service": {
+          "type": "string",
+          "description": "The type of service requested."
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "The date of the service."
+        },
+        "time": {
+          "type": "string",
+          "description": "The time of the service."
+        },
+        "address": {
+          "type": "string",
+          "description": "The customer's address."
+        },
+        "name": {
+          "type": "string",
+          "description": "The customer's full name."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The customer's phone number."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes or instructions."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the booking was created."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "confirmed", "completed", "cancelled"],
+          "description": "The current status of the booking."
+        }
+      },
+      "required": ["service", "date", "time", "address", "name", "phone", "createdAt", "status"]
+    }
+  },
+  "firestore": {
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Collection of all service bookings."
+    }
+  }
+}
