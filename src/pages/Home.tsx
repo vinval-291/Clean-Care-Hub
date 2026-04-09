@@ -5,7 +5,8 @@ import { ArrowRight, Star, Phone, ShieldCheck, Sparkles } from 'lucide-react';
 
 const Home = () => {
   const whatsappNumber = "+2348146856984";
-  const whatsappLink = `https://wa.me/${whatsappNumber.replace(/\s+/g, '')}`;
+  const defaultMessage = encodeURIComponent("Hello Clean & Care Hub, I'm interested in booking a service. Could you please provide more information?");
+  const whatsappLink = `https://wa.me/${whatsappNumber.replace(/\s+/g, '')}?text=${defaultMessage}`;
 
   return (
     <div className="flex flex-col">

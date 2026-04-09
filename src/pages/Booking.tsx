@@ -92,32 +92,51 @@ const Booking = () => {
     const path = 'bookings';
     try {
       // 1. Save to Firestore
-      await addDoc(collection(db, path), {
+      const docRef = await addDoc(collection(db, path), {
         ...formData,
         status: 'pending',
         createdAt: serverTimestamp()
       });
 
-      // 2. Prepare Email Message
-      const adminEmail = "Cleanandcarehub26@gmail.com";
-      const subject = `New Booking Request: ${formData.service}`;
-      const body = `New Booking Request\n\n` +
-        `Service: ${formData.service}\n` +
-        `Date: ${formData.date}\n` +
-        `Time: ${formData.time}\n` +
-        `Name: ${formData.name}\n` +
-        `Phone: ${formData.phone}\n` +
-        `Address: ${formData.address}\n` +
-        `Notes: ${formData.notes || 'None'}`;
+      // 2. Send Email via Backend
+      try {
+        await fetch('/api/send-booking-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            bookingData: {
+              ...formData,
+              fullName: formData.name, // Mapping 'name' to 'fullName' for the backend
+              id: docRef.id
+            }
+          }),
+        });
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+        // We don't block the user if the email fails, as Firestore and WhatsApp are primary
+      }
+
+      // 3. Prepare WhatsApp Message
+      const whatsappNumber = "+2348146856984";
+      const message = `*New Booking Request*%0A%0A` +
+        `*Service:* ${formData.service}%0A` +
+        `*Date:* ${formData.date}%0A` +
+        `*Time:* ${formData.time}%0A` +
+        `*Name:* ${formData.name}%0A` +
+        `*Phone:* ${formData.phone}%0A` +
+        `*Address:* ${formData.address}%0A` +
+        `*Notes:* ${formData.notes || 'None'}`;
       
-      const mailtoLink = `mailto:${adminEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      const whatsappLink = `https://wa.me/${whatsappNumber.replace(/\+/g, '')}?text=${message}`;
 
       // 3. Move to success step
       setStep(4);
       
-      // 4. Optionally open Email Client (delayed slightly for UX)
+      // 4. Optionally open WhatsApp (delayed slightly for UX)
       setTimeout(() => {
-        window.location.href = mailtoLink;
+        window.open(whatsappLink, '_blank');
       }, 1500);
 
     } catch (error) {
@@ -347,7 +366,7 @@ const Booking = () => {
                   <h2 className="text-3xl font-display font-bold text-slate-900 mb-4">Booking Received!</h2>
                   <p className="text-slate-600 mb-8">
                     Thank you, {formData.name}. Your details have been saved to our database. 
-                    We're opening your email client to send your booking summary to our team for instant confirmation.
+                    We're opening WhatsApp to send your booking summary to our team for instant confirmation.
                   </p>
                   <button 
                     type="button"

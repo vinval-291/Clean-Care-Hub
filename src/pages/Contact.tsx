@@ -4,11 +4,58 @@ import { Phone, MessageSquare, Mail, MapPin, Send } from 'lucide-react';
 
 const Contact = () => {
   const whatsappNumber = "+2348146856984";
-  const whatsappLink = `https://wa.me/${whatsappNumber.replace(/\s+/g, '')}`;
+  const defaultMessage = encodeURIComponent("Hello Clean & Care Hub, I'm interested in booking a service. Could you please provide more information?");
+  const whatsappLink = `https://wa.me/${whatsappNumber.replace(/\s+/g, '')}?text=${defaultMessage}`;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [formData, setFormData] = React.useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Thank you for your message! We'll get back to you shortly.");
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/send-booking-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          bookingData: {
+            service: formData.subject,
+            date: 'N/A (Contact Form)',
+            time: 'N/A (Contact Form)',
+            fullName: formData.name,
+            phone: `Email: ${formData.email}`,
+            address: 'N/A (Contact Form)',
+            notes: formData.message,
+            id: `contact-${Date.now()}`
+          }
+        }),
+      });
+
+      if (response.ok) {
+        alert("Thank you for your message! We'll get back to you shortly.");
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      } else {
+        throw new Error('Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending contact message:', error);
+      alert("Something went wrong. Please try again or contact us via WhatsApp.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -86,7 +133,10 @@ const Contact = () => {
                     <label className="block text-sm font-bold text-slate-900 mb-2">Full Name</label>
                     <input 
                       type="text" 
+                      name="name"
                       required
+                      value={formData.name}
+                      onChange={handleInputChange}
                       className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:outline-none focus:border-brand-primary transition-colors"
                       placeholder="John Doe"
                     />
@@ -95,7 +145,10 @@ const Contact = () => {
                     <label className="block text-sm font-bold text-slate-900 mb-2">Email Address</label>
                     <input 
                       type="email" 
+                      name="email"
                       required
+                      value={formData.email}
+                      onChange={handleInputChange}
                       className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:outline-none focus:border-brand-primary transition-colors"
                       placeholder="john@example.com"
                     />
@@ -105,7 +158,10 @@ const Contact = () => {
                   <label className="block text-sm font-bold text-slate-900 mb-2">Subject</label>
                   <input 
                     type="text" 
+                    name="subject"
                     required
+                    value={formData.subject}
+                    onChange={handleInputChange}
                     className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:outline-none focus:border-brand-primary transition-colors"
                     placeholder="How can we help?"
                   />
@@ -113,17 +169,21 @@ const Contact = () => {
                 <div className="mb-8">
                   <label className="block text-sm font-bold text-slate-900 mb-2">Message</label>
                   <textarea 
+                    name="message"
                     required
                     rows={5}
+                    value={formData.message}
+                    onChange={handleInputChange}
                     className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:outline-none focus:border-brand-primary transition-colors resize-none"
                     placeholder="Tell us more about your needs..."
                   ></textarea>
                 </div>
                 <button 
                   type="submit"
-                  className="w-full bg-brand-primary text-white py-5 rounded-full font-bold text-lg hover:bg-teal-800 transition-all flex items-center justify-center gap-2"
+                  disabled={isSubmitting}
+                  className="w-full bg-brand-primary text-white py-5 rounded-full font-bold text-lg hover:bg-teal-800 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  Send Message
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
                   <Send className="w-5 h-5" />
                 </button>
               </form>

@@ -5,7 +5,8 @@ import Logo from '../common/Logo';
 
 const Footer = () => {
   const whatsappNumber = "+2348146856984";
-  const whatsappLink = `https://wa.me/${whatsappNumber.replace(/\s+/g, '')}`;
+  const defaultMessage = encodeURIComponent("Hello Clean & Care Hub, I'm interested in booking a service. Could you please provide more information?");
+  const whatsappLink = `https://wa.me/${whatsappNumber.replace(/\s+/g, '')}?text=${defaultMessage}`;
 
   return (
     <footer className="bg-slate-50 border-t border-slate-200 pt-20 pb-10">
