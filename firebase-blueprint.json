@@ -30,6 +30,10 @@
           "type": "string",
           "description": "The customer's phone number."
         },
+        "email": {
+          "type": "string",
+          "description": "The customer's email address."
+        },
         "notes": {
           "type": "string",
           "description": "Additional notes or instructions."
@@ -45,7 +49,7 @@
           "description": "The current status of the booking."
         }
       },
-      "required": ["service", "date", "time", "address", "name", "phone", "createdAt", "status"]
+      "required": ["service", "date", "time", "address", "name", "phone", "email", "createdAt", "status"]
     },
     "Message": {
       "title": "Message",

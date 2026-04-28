@@ -7,7 +7,7 @@ service cloud.firestore {
              request.auth.token.email_verified == true;
     }
     match /bookings/{bookingId} {
-      allow create: if request.resource.data.keys().hasAll(['service', 'date', 'time', 'address', 'name', 'phone', 'status', 'createdAt']);
+      allow create: if request.resource.data.keys().hasAll(['service', 'date', 'time', 'address', 'name', 'phone', 'email', 'status', 'createdAt']);
       allow read, update, delete: if isAdmin();
     }
     match /messages/{messageId} {
