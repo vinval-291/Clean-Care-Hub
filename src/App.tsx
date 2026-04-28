@@ -7,6 +7,7 @@ import Services from './pages/Services';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Booking from './pages/Booking';
+import Admin from './pages/Admin';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Scroll to top on route change
@@ -32,6 +33,7 @@ export default function App() {
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/booking" element={<Booking />} />
+              <Route path="/admin" element={<Admin />} />
             </Routes>
           </main>
           <Footer />
