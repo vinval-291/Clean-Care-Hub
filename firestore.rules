@@ -10,5 +10,9 @@ service cloud.firestore {
       allow create: if request.resource.data.keys().hasAll(['service', 'date', 'time', 'address', 'name', 'phone', 'status', 'createdAt']);
       allow read, update, delete: if isAdmin();
     }
+    match /messages/{messageId} {
+      allow create: if request.resource.data.keys().hasAll(['name', 'email', 'subject', 'message', 'createdAt']);
+      allow read, update, delete: if isAdmin();
+    }
   }
 }

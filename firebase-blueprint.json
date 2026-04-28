@@ -46,12 +46,29 @@
         }
       },
       "required": ["service", "date", "time", "address", "name", "phone", "createdAt", "status"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A contact message from a user.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "subject", "message", "createdAt"]
     }
   },
   "firestore": {
     "/bookings/{bookingId}": {
       "schema": "Booking",
       "description": "Collection of all service bookings."
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Collection of all contact messages."
     }
   }
 }

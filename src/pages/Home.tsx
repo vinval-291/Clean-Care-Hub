@@ -72,7 +72,7 @@ const Home = () => {
             >
               <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-[4/5] lg:aspect-square">
                 <img 
-                  src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=1000" 
+                  src="/regenerated_image_1777367036861.png" 
                   alt="Professional Cleaning Service" 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"

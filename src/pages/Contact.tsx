@@ -1,6 +1,59 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Phone, MessageSquare, Mail, MapPin, Send } from 'lucide-react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../firebase';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 const Contact = () => {
   const whatsappNumber = "+2348146856984";
@@ -24,35 +77,42 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    const path = 'messages';
     try {
-      const response = await fetch('/api/send-booking-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          bookingData: {
-            service: formData.subject,
-            date: 'N/A (Contact Form)',
-            time: 'N/A (Contact Form)',
-            fullName: formData.name,
-            phone: `Email: ${formData.email}`,
-            address: 'N/A (Contact Form)',
-            notes: formData.message,
-            id: `contact-${Date.now()}`
-          }
-        }),
+      // 1. Save to Firestore
+      await addDoc(collection(db, path), {
+        ...formData,
+        createdAt: serverTimestamp()
       });
 
-      if (response.ok) {
-        alert("Thank you for your message! We'll get back to you shortly.");
-        setFormData({ name: '', email: '', subject: '', message: '' });
-      } else {
-        throw new Error('Failed to send message');
+      // 2. Send Email via Backend
+      try {
+        await fetch('/api/send-booking-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            bookingData: {
+              service: formData.subject,
+              date: 'N/A (Contact Form)',
+              time: 'N/A (Contact Form)',
+              fullName: formData.name,
+              phone: `Email: ${formData.email}`,
+              address: 'N/A (Contact Form)',
+              notes: formData.message,
+              id: `contact-${Date.now()}`
+            }
+          }),
+        });
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
       }
+
+      alert("Thank you for your message! We'll get back to you shortly.");
+      setFormData({ name: '', email: '', subject: '', message: '' });
     } catch (error) {
-      console.error('Error sending contact message:', error);
-      alert("Something went wrong. Please try again or contact us via WhatsApp.");
+      handleFirestoreError(error, OperationType.CREATE, path);
     } finally {
       setIsSubmitting(false);
     }
