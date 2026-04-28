@@ -20,6 +20,8 @@ import {
   onAuthStateChanged, 
   signOut,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
   User as FirebaseUser
 } from 'firebase/auth';
 import { 
@@ -64,9 +66,11 @@ const Admin = () => {
   
   // Login states
   const [isEmailLogin, setIsEmailLogin] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const adminEmails = ['kuteyioluwaloyevincent291@gmail.com', 'cleanandcarehub26@gmail.com'];
@@ -125,16 +129,52 @@ const Admin = () => {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
+    setSuccessMessage('');
     setIsLoggingIn(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      if (userCredential.user && !userCredential.user.emailVerified) {
+        setSuccessMessage('Please check your email to verify your account for full access.');
+      }
     } catch (error: any) {
       console.error('Email Login Error:', error);
       let msg = 'Failed to sign in. Please check your credentials.';
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+      if (error.code === 'auth/user-not-found') {
+        msg = 'This admin account hasn\'t been registered with a password yet. Please use the "Register" option below.';
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         msg = 'Invalid email or password.';
       } else if (error.code === 'auth/too-many-requests') {
         msg = 'Too many failed attempts. Please try again later.';
+      }
+      setLoginError(msg);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleEmailRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    setSuccessMessage('');
+
+    if (!adminEmails.includes(email.toLowerCase())) {
+      setLoginError('This email is not authorized for admin registration.');
+      return;
+    }
+
+    setIsLoggingIn(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(userCredential.user);
+      setSuccessMessage('Admin account created! A verification email has been sent. Please verify your email before logging in.');
+      setIsRegistering(false);
+    } catch (error: any) {
+      console.error('Email Registration Error:', error);
+      let msg = 'Failed to register admin account.';
+      if (error.code === 'auth/email-already-in-use') {
+        msg = 'This email is already registered. Please login instead.';
+      } else if (error.code === 'auth/weak-password') {
+        msg = 'Password is too weak. Please use at least 6 characters.';
       }
       setLoginError(msg);
     } finally {
@@ -177,8 +217,14 @@ const Admin = () => {
           </p>
 
           {loginError && (
-            <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-medium border border-red-100">
+            <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-medium border border-red-100 shadow-sm animate-pulse">
               {loginError}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-6 p-4 bg-teal-50 text-brand-primary rounded-2xl text-sm font-medium border border-teal-100 shadow-sm">
+              {successMessage}
             </div>
           )}
 
@@ -210,13 +256,13 @@ const Admin = () => {
                 onClick={() => setIsEmailLogin(true)}
                 className="w-full text-slate-500 text-sm font-bold hover:text-brand-primary transition-colors py-2"
               >
-                Sign in with Email instead
+                Sign in with Password instead
               </button>
             </div>
           ) : (
-            <form onSubmit={handleEmailLogin} className="space-y-4">
+            <form onSubmit={isRegistering ? handleEmailRegister : handleEmailLogin} className="space-y-4">
               <div className="text-left">
-                <label className="block text-sm font-bold text-slate-900 mb-2">Email Address</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2">Admin Email</label>
                 <div className="relative">
                   <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                   <input 
@@ -230,7 +276,9 @@ const Admin = () => {
                 </div>
               </div>
               <div className="text-left">
-                <label className="block text-sm font-bold text-slate-900 mb-2">Password</label>
+                <label className="block text-sm font-bold text-slate-900 mb-2">
+                  {isRegistering ? 'Set Admin Password' : 'Password'}
+                </label>
                 <div className="relative">
                   <ShieldCheck className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                   <input 
@@ -251,23 +299,49 @@ const Admin = () => {
                 {isLoggingIn ? (
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Signing in...
+                    {isRegistering ? 'Registering...' : 'Signing in...'}
                   </div>
-                ) : 'Sign In'}
+                ) : (isRegistering ? 'Register Admin Account' : 'Sign In')}
               </button>
-              <button 
-                type="button"
-                onClick={() => setIsEmailLogin(false)}
-                className="w-full text-slate-500 text-sm font-bold hover:text-brand-primary transition-colors py-2"
-              >
-                ← Back to Google Login
-              </button>
+              
+              <div className="flex flex-col gap-2 pt-2">
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setIsRegistering(!isRegistering);
+                    setLoginError('');
+                    setSuccessMessage('');
+                  }}
+                  className="w-full text-brand-primary text-xs font-bold hover:underline transition-colors"
+                >
+                  {isRegistering ? 'Already have a password? Login' : 'First time? Set your admin password'}
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setIsEmailLogin(false)}
+                  className="w-full text-slate-500 text-xs font-bold hover:text-brand-primary transition-colors"
+                >
+                  ← Back to Google Login
+                </button>
+              </div>
             </form>
           )}
 
-          {user && !adminEmails.includes(user.email) && (
+          {user && !adminEmails.includes(user.email || '') && (
             <div className="mt-8 p-4 bg-amber-50 text-amber-700 rounded-2xl text-xs font-bold ring-1 ring-amber-100">
               Access Denied. Account {user.email} is not in the admin list.
+            </div>
+          )}
+          
+          {user && adminEmails.includes(user.email || '') && !user.emailVerified && (
+            <div className="mt-8 p-4 bg-blue-50 text-blue-700 rounded-2xl text-xs font-bold ring-1 ring-blue-100 text-left">
+              <p className="mb-2">⚠️ Email not verified. To protect the admin dashboard, you must verify your email.</p>
+              <button 
+                onClick={() => user && sendEmailVerification(user).then(() => setSuccessMessage('Verification email sent!'))}
+                className="text-blue-800 underline block"
+              >
+                Resend verification email
+              </button>
             </div>
           )}
         </motion.div>
